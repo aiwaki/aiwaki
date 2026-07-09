@@ -3,22 +3,18 @@
 
 from __future__ import annotations
 
-import hashlib
 import io
 import json
 import os
-import random
 import tarfile
 import urllib.error
 import urllib.request
-from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 
 
 OWNER = os.environ.get("PROFILE_OWNER", "aiwaki")
 PROFILE_REPO = os.environ.get("PROFILE_REPO", OWNER)
 README = Path("README.md")
-BANNER = Path(os.environ.get("PROFILE_BANNER_OUTPUT", "assets/daily-banner.svg"))
 
 START = "<!-- code-lines:start -->"
 END = "<!-- code-lines:end -->"
@@ -212,124 +208,6 @@ def update_readme(total_lines: int, total_files: int, repo_count: int) -> None:
     README.write_text(before + metric + after, encoding="utf-8")
 
 
-def generate_daily_banner() -> None:
-    seed_label = os.environ.get("PROFILE_BANNER_SEED") or os.environ.get("PROFILE_BANNER_DATE")
-    if not seed_label:
-        seed_label = datetime.now(timezone.utc).date().isoformat()
-    seed = int.from_bytes(hashlib.sha256(f"{OWNER}:{seed_label}".encode()).digest()[:8], "big")
-    rng = random.Random(seed)
-
-    width = 1200
-    height = 220
-    palettes = [
-        ("#0b1020", "#13233a", "#8aa4ff", "#64d2ff", "#87f5b5", "#ffd166"),
-        ("#10151f", "#1d2836", "#9ccfd8", "#c4a7e7", "#f6c177", "#eb6f92"),
-        ("#0c1412", "#183027", "#7ee787", "#58a6ff", "#d2a8ff", "#f2cc60"),
-        ("#111016", "#242132", "#a3be8c", "#88c0d0", "#b48ead", "#ebcb8b"),
-        ("#0f1218", "#202635", "#7aa2f7", "#9ece6a", "#bb9af7", "#e0af68"),
-    ]
-    base, deep, accent, cool, warm, spark = rng.choice(palettes)
-    cell = rng.choice((18, 20, 24))
-
-    parts: list[str] = [
-        '<?xml version="1.0" encoding="UTF-8"?>',
-        (
-            f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
-            f'viewBox="0 0 {width} {height}" role="img" aria-label="Daily generated profile banner">'
-        ),
-        f"<title>daily seed {escape_svg(seed_label)}</title>",
-        "<defs>",
-        '<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">',
-        f'<stop offset="0%" stop-color="{base}"/>',
-        f'<stop offset="58%" stop-color="{deep}"/>',
-        f'<stop offset="100%" stop-color="{base}"/>',
-        "</linearGradient>",
-        '<radialGradient id="glow" cx="50%" cy="35%" r="70%">',
-        f'<stop offset="0%" stop-color="{accent}" stop-opacity="0.26"/>',
-        f'<stop offset="55%" stop-color="{cool}" stop-opacity="0.08"/>',
-        '<stop offset="100%" stop-color="#000000" stop-opacity="0"/>',
-        "</radialGradient>",
-        '<filter id="soft"><feGaussianBlur stdDeviation="8"/></filter>',
-        '<filter id="tiny"><feGaussianBlur stdDeviation="1.6"/></filter>',
-        "</defs>",
-        '<rect width="1200" height="220" fill="url(#bg)"/>',
-        '<rect width="1200" height="220" fill="url(#glow)"/>',
-    ]
-
-    pixel_colors = [accent, cool, warm, spark, "#ffffff"]
-    for y in range(0, height, cell):
-        for x in range(0, width, cell):
-            threshold = 0.16 if y < 120 else 0.30
-            if rng.random() > threshold:
-                continue
-            size = rng.choice((cell, cell, cell * 2))
-            opacity = rng.uniform(0.035, 0.16)
-            color = rng.choice(pixel_colors)
-            parts.append(
-                f'<rect x="{x}" y="{y}" width="{size}" height="{cell}" '
-                f'fill="{color}" opacity="{opacity:.3f}"/>'
-            )
-
-    skyline_y = rng.randint(132, 158)
-    for x in range(0, width, rng.choice((22, 24, 28))):
-        block_w = rng.randint(18, 54)
-        block_h = rng.randint(18, 88)
-        color = rng.choice((deep, base, accent, cool))
-        parts.append(
-            f'<rect x="{x}" y="{skyline_y - block_h}" width="{block_w}" height="{block_h + 90}" '
-            f'fill="{color}" opacity="{rng.uniform(0.10, 0.26):.3f}"/>'
-        )
-
-    for _ in range(7):
-        y = rng.randint(40, 178)
-        points = []
-        x = -40
-        while x <= width + 40:
-            points.append(f"{x},{y + rng.randint(-18, 18)}")
-            x += rng.randint(85, 150)
-        color = rng.choice((accent, cool, warm))
-        opacity = rng.uniform(0.18, 0.42)
-        parts.append(
-            f'<polyline points="{" ".join(points)}" fill="none" stroke="{color}" '
-            f'stroke-width="{rng.uniform(1.0, 2.4):.2f}" opacity="{opacity:.3f}" filter="url(#tiny)"/>'
-        )
-
-    for _ in range(34):
-        x = rng.randint(28, width - 28)
-        y = rng.randint(24, height - 30)
-        radius = rng.choice((1.4, 1.8, 2.2, 2.8))
-        color = rng.choice((accent, cool, warm, spark))
-        parts.append(
-            f'<circle cx="{x}" cy="{y}" r="{radius}" fill="{color}" '
-            f'opacity="{rng.uniform(0.28, 0.72):.3f}"/>'
-        )
-
-    sheen_x = rng.randint(180, 780)
-    parts.extend(
-        [
-            f'<ellipse cx="{sheen_x}" cy="18" rx="260" ry="42" fill="{cool}" opacity="0.07" filter="url(#soft)"/>',
-            '<rect x="0" y="0" width="1200" height="220" fill="none" stroke="#ffffff" opacity="0.10"/>',
-            (
-                f'<text x="1174" y="196" text-anchor="end" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" '
-                f'font-size="11" fill="#ffffff" opacity="0.22">seed {escape_svg(seed_label.replace("-", "."))}</text>'
-            ),
-            "</svg>",
-        ]
-    )
-
-    BANNER.parent.mkdir(parents=True, exist_ok=True)
-    BANNER.write_text("\n".join(parts) + "\n", encoding="utf-8")
-
-
-def escape_svg(value: str) -> str:
-    return (
-        value.replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-        .replace('"', "&quot;")
-    )
-
-
 def main() -> None:
     repos = public_source_repos()
     total_lines = 0
@@ -344,7 +222,6 @@ def main() -> None:
         total_files += files
 
     update_readme(total_lines, total_files, len(repos))
-    generate_daily_banner()
     print(f"counted {total_lines:,} source lines in {total_files:,} files across {len(repos)} repos")
 
 
