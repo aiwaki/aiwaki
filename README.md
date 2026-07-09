@@ -29,7 +29,7 @@
   <tr>
     <td colspan="2" valign="top">
       <b>code</b><br />
-      <!-- code-lines:start -->54,841 public source lines<!-- code-lines:end --> · Python 61.3 · Kotlin 15.7 · JavaScript 8.7 · Go 5.7 · Swift 3.2 · TypeScript 1.8 · Rust 1.5
+      <!-- code-lines:start -->54,841 public source lines · 231 files · 4 repos<!-- code-lines:end --> · Python 61.3 · Kotlin 15.7 · JavaScript 8.7 · Go 5.7 · Swift 3.2 · TypeScript 1.8 · Rust 1.5
     </td>
   </tr>
 </table>

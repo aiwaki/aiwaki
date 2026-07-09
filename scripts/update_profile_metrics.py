@@ -18,7 +18,7 @@ from pathlib import Path, PurePosixPath
 OWNER = os.environ.get("PROFILE_OWNER", "aiwaki")
 PROFILE_REPO = os.environ.get("PROFILE_REPO", OWNER)
 README = Path("README.md")
-BANNER = Path("assets/daily-banner.svg")
+BANNER = Path(os.environ.get("PROFILE_BANNER_OUTPUT", "assets/daily-banner.svg"))
 
 START = "<!-- code-lines:start -->"
 END = "<!-- code-lines:end -->"
@@ -199,7 +199,7 @@ def is_probably_text(data: bytes) -> bool:
     return control / len(sample) < 0.08
 
 
-def update_readme(total_lines: int) -> None:
+def update_readme(total_lines: int, total_files: int, repo_count: int) -> None:
     readme = README.read_text(encoding="utf-8")
     before, start, rest = readme.partition(START)
     if not start:
@@ -208,13 +208,15 @@ def update_readme(total_lines: int) -> None:
     if not end:
         raise RuntimeError(f"{END} marker is missing")
 
-    metric = f"{START}{total_lines:,} public source lines{END}"
+    metric = f"{START}{total_lines:,} public source lines · {total_files:,} files · {repo_count} repos{END}"
     README.write_text(before + metric + after, encoding="utf-8")
 
 
 def generate_daily_banner() -> None:
-    today = datetime.now(timezone.utc).date().isoformat()
-    seed = int.from_bytes(hashlib.sha256(f"{OWNER}:{today}".encode()).digest()[:8], "big")
+    seed_label = os.environ.get("PROFILE_BANNER_SEED") or os.environ.get("PROFILE_BANNER_DATE")
+    if not seed_label:
+        seed_label = datetime.now(timezone.utc).date().isoformat()
+    seed = int.from_bytes(hashlib.sha256(f"{OWNER}:{seed_label}".encode()).digest()[:8], "big")
     rng = random.Random(seed)
 
     width = 1200
@@ -235,7 +237,7 @@ def generate_daily_banner() -> None:
             f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
             f'viewBox="0 0 {width} {height}" role="img" aria-label="Daily generated profile banner">'
         ),
-        f"<title>daily seed {today}</title>",
+        f"<title>daily seed {escape_svg(seed_label)}</title>",
         "<defs>",
         '<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">',
         f'<stop offset="0%" stop-color="{base}"/>',
@@ -309,7 +311,7 @@ def generate_daily_banner() -> None:
             '<rect x="0" y="0" width="1200" height="220" fill="none" stroke="#ffffff" opacity="0.10"/>',
             (
                 f'<text x="1174" y="196" text-anchor="end" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" '
-                f'font-size="11" fill="#ffffff" opacity="0.22">seed {today.replace("-", ".")}</text>'
+                f'font-size="11" fill="#ffffff" opacity="0.22">seed {escape_svg(seed_label.replace("-", "."))}</text>'
             ),
             "</svg>",
         ]
@@ -317,6 +319,15 @@ def generate_daily_banner() -> None:
 
     BANNER.parent.mkdir(parents=True, exist_ok=True)
     BANNER.write_text("\n".join(parts) + "\n", encoding="utf-8")
+
+
+def escape_svg(value: str) -> str:
+    return (
+        value.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+    )
 
 
 def main() -> None:
@@ -332,7 +343,7 @@ def main() -> None:
         total_lines += lines
         total_files += files
 
-    update_readme(total_lines)
+    update_readme(total_lines, total_files, len(repos))
     generate_daily_banner()
     print(f"counted {total_lines:,} source lines in {total_files:,} files across {len(repos)} repos")
 
