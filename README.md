@@ -25,7 +25,7 @@
 </p>
 
 <p align="center">
-  <!-- code-lines:start -->82,320 public source lines · 283 files · 4 repos<!-- code-lines:end -->
+  <!-- code-lines:start -->86,011 public source lines · 302 files · 4 repos<!-- code-lines:end -->
   <br />
   <sub>Python 61.3 · Kotlin 15.7 · JavaScript 8.7 · Go 5.7 · Swift 3.2 · TypeScript 1.8 · Rust 1.5</sub>
 </p>
