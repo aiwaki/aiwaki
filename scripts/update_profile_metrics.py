@@ -327,8 +327,8 @@ def format_language_mix(language_bytes: dict[str, int], limit: int = LANGUAGE_LI
 def render_metrics_block(metrics: ProfileMetrics) -> str:
     return (
         f"{METRICS_START}\n"
-        f"  {metrics.public_lines:,} public source lines · "
-        f"{approximate_private_lines(metrics.private_lines)} private source lines · "
+        f"  {metrics.public_lines:,} active public source lines · "
+        f"{approximate_private_lines(metrics.private_lines)} active private source lines · "
         f"{metrics.public_files:,} public files · {metrics.public_repos} public repos\n"
         "  <br />\n"
         f"  <sub>{format_language_mix(metrics.language_bytes)}</sub>\n"
@@ -358,9 +358,9 @@ def main() -> None:
     changed = update_readme(metrics)
     action = "updated" if changed else "verified"
     print(
-        f"{action} {metrics.public_lines:,} public source lines in "
+        f"{action} {metrics.public_lines:,} active public source lines in "
         f"{metrics.public_files:,} files across {metrics.public_repos} public repos; "
-        f"{approximate_private_lines(metrics.private_lines)} private source lines"
+        f"{approximate_private_lines(metrics.private_lines)} active private source lines"
     )
 
 
