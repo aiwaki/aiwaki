@@ -4,20 +4,49 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "17 3 * * *"
+  pull_request:
+    paths:
+      - README.md
+      - scripts/update_profile_metrics.py
+      - tests/test_update_profile_metrics.py
+      - docs/profile-metrics.md
+      - .github/workflows/profile-metrics.yml
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: profile-metrics-${{ github.event_name }}
+  cancel-in-progress: false
 
 jobs:
-  update:
+  test:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - name: Test profile metrics
+        run: python3 -m unittest discover -s tests -v
+
+  update:
+    if: github.event_name != 'pull_request'
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
 
       - name: Update README metrics
         env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: python3 scripts/update_profile_metrics.py
+          GITHUB_TOKEN: ${{ secrets.PROFILE_METRICS_TOKEN }}
+        run: |
+          if [ -z "$GITHUB_TOKEN" ]; then
+            echo "::error::PROFILE_METRICS_TOKEN is not configured"
+            exit 1
+          fi
+          python3 scripts/update_profile_metrics.py
 
       - name: Commit changes
         run: |
