@@ -95,10 +95,10 @@ class ProfileMetricsTests(unittest.TestCase):
             updated = readme.read_text(encoding="utf-8")
 
         self.assertTrue(changed)
-        self.assertIn("12,345 active public source lines", updated)
-        self.assertIn("~9,000 active private source lines", updated)
+        self.assertIn("12,345 public source lines", updated)
+        self.assertIn("~9,000 private source lines", updated)
         self.assertIn("67 public files · 3 public repos", updated)
-        self.assertIn("Python 75.0 · Rust 25.0", updated)
+        self.assertIn("PUBLIC LANGUAGES · Python 75.0 · Rust 25.0", updated)
 
     def test_private_repository_failures_do_not_reveal_its_name(self) -> None:
         private_repo = repo("confidential-project", private=True)
