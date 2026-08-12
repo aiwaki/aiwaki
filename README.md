@@ -26,8 +26,8 @@
 
 <p align="center">
   <!-- profile-metrics:start -->
-  174,033 public source lines · ~84,000 private source lines · 474 public files · 3 public repos
+  184,650 public source lines · ~84,000 private source lines · 484 public files · 3 public repos
   <br />
-  <sub>PUBLIC LANGUAGES · Rust 41.4 · Python 34.9 · Kotlin 13.7 · Go 4.7 · Swift 3.1 · Shell 0.7 · JavaScript 0.7</sub>
+  <sub>PUBLIC LANGUAGES · Rust 40.2 · Python 37.4 · Kotlin 12.9 · Go 4.4 · Swift 3.0 · JavaScript 0.8 · Shell 0.7</sub>
   <!-- profile-metrics:end -->
 </p>
